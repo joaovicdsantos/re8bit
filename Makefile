@@ -6,7 +6,7 @@ LIB_DIR := ./lib
 BIN_DIR := ./bin
 
 # Object Files
-OBJS := re8bit.o hello.o
+OBJS := re8bit.o chip8.o
 
 # Compiler Settings
 CC := gcc
