@@ -10,8 +10,8 @@ OBJS := re8bit.o chip8.o window.o
 
 # Compiler Settings
 CC := gcc
-CFLAGS := -std=c2x -Wall -Wextra -pedantic -I$(INCLUDE_DIR) -O3
-CFLAGS += -lcsfml-graphics
+CFLAGS := -std=c2x -Wall -Wextra -pedantic -I$(INCLUDE_DIR) -O0
+CFLAGS += -lcsfml-graphics -lcsfml-system
 
 # Build re8bit
 re8bit: dir $(OBJS)

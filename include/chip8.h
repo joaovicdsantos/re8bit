@@ -39,5 +39,6 @@ typedef struct chip8
 Chip8 new_chip8();
 void load_rom(Chip8 *chip8, const char *rom_path);
 void emulate_cycle(Chip8 *chip8);
+void reset_keys(Chip8 *chip8);
 
 #endif
