@@ -28,11 +28,29 @@
       "-O3",
       "-c",
       "-o",
-      "./build/hello.o",
-      "./src/hello.c"
+      "./build/chip8.o",
+      "./src/chip8.c"
     ],
     "directory": "/home/buda/Workspace/re8bit",
-    "file": "/home/buda/Workspace/re8bit/src/hello.c",
-    "output": "/home/buda/Workspace/re8bit/build/hello.o"
+    "file": "/home/buda/Workspace/re8bit/src/chip8.c",
+    "output": "/home/buda/Workspace/re8bit/build/chip8.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c2x",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-I./include",
+      "-O3",
+      "-c",
+      "-o",
+      "./build/window.o",
+      "./src/window.c"
+    ],
+    "directory": "/home/buda/Workspace/re8bit",
+    "file": "/home/buda/Workspace/re8bit/src/window.c",
+    "output": "/home/buda/Workspace/re8bit/build/window.o"
   }
 ]
