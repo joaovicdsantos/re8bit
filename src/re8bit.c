@@ -1,31 +1,39 @@
 #include "chip8.h"
+#include "window.h"
+#include <SFML/Graphics.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 int main(int argc, char *argv[])
 {
+    Chip8 chip8;
+    sfRenderWindow *window = NULL;
+
     if (argc < 2)
     {
         printf("Invalid number of arguments.\nUsage: ./chip8 <rom_file>\n");
         exit(1);
     }
-    char *rom_path = argv[1];
 
-    Chip8 chip8 = new_chip8();
+    chip8 = new_chip8();
+    window = new_window();
 
-    load_rom(&chip8, rom_path);
+    load_rom(&chip8, argv[1]);
 
-    int c = 0;
-    while (true)
+    while (sfRenderWindow_isOpen(window))
     {
+        sfEvent event;
+        while (sfRenderWindow_pollEvent(window, &event))
+        {
+            if (event.type == sfEvtClosed)
+                sfRenderWindow_close(window);
+        }
+
         emulate_cycle(&chip8);
 
-        if (chip8.display_flag)
-            draw(chip8.display);
-
-        c++;
-        if (c > 300)
-            break;
+        sfRenderWindow_clear(window, sfBlack);
+        draw(window, chip8.display);
+        sfRenderWindow_display(window);
     }
 
     return 0;

@@ -25,7 +25,6 @@ typedef struct chip8
 {
     unsigned char memory[MEMORY_SIZE];
     unsigned char display[DISPLAY_SIZE];
-    unsigned char display_flag : 1;
     unsigned short PC;
     unsigned short I;
     unsigned char registers[REGISTER_SIZE];
@@ -38,7 +37,6 @@ typedef struct chip8
 } Chip8;
 
 Chip8 new_chip8();
-void draw(unsigned char display[DISPLAY_SIZE]);
 void load_rom(Chip8 *chip8, const char *rom_path);
 void emulate_cycle(Chip8 *chip8);
 

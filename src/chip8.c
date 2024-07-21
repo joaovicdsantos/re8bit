@@ -55,26 +55,6 @@ Chip8 new_chip8()
     return chip8;
 }
 
-void draw(unsigned char display[DISPLAY_SIZE])
-
-{
-    /*
-     * TODO: In future, this should use SDL or SFML libs
-     * For now, I just use the stdout
-     * */
-    system("clear");
-    for (int i = 0; i < DISPLAY_SIZE; i++)
-    {
-        if (display[i] == 0x00)
-            putchar(' ');
-        else
-            putchar('@');
-
-        if ((i + 1) % 64 == 0)
-            putchar('\n');
-    }
-}
-
 void load_rom(Chip8 *chip8, const char *rom_path)
 {
     FILE *rom = fopen(rom_path, "rb");
@@ -104,7 +84,6 @@ void _decode(Chip8 *chip8)
 
 void emulate_cycle(Chip8 *chip8)
 {
-    chip8->display_flag = 0;
     _fetch(chip8);
     _decode(chip8);
 
@@ -117,6 +96,8 @@ void emulate_cycle(Chip8 *chip8)
             for (short i = 0; i < DISPLAY_SIZE; i++)
                 chip8->display[i] = 0;
             break;
+        default:
+            printf("Invalid instruction. Opcode: %x\n", chip8->instruction.op);
         }
         break;
     case 0x1000:
@@ -151,7 +132,6 @@ void emulate_cycle(Chip8 *chip8)
                 }
             }
         }
-        chip8->display_flag = 1;
         break;
     default:
         printf("Invalid instruction. Opcode: %x\n", chip8->instruction.op);
@@ -161,7 +141,5 @@ void emulate_cycle(Chip8 *chip8)
         chip8->delay_timer--;
 
     if (chip8->sound_timer > 0)
-    {
         chip8->sound_timer--;
-    }
 }

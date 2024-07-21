@@ -6,11 +6,12 @@ LIB_DIR := ./lib
 BIN_DIR := ./bin
 
 # Object Files
-OBJS := re8bit.o chip8.o
+OBJS := re8bit.o chip8.o window.o
 
 # Compiler Settings
 CC := gcc
 CFLAGS := -std=c2x -Wall -Wextra -pedantic -I$(INCLUDE_DIR) -O3
+CFLAGS += -lcsfml-graphics
 
 # Build re8bit
 re8bit: dir $(OBJS)
