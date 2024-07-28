@@ -1,13 +1,14 @@
 [
   {
     "arguments": [
-      "/usr/bin/gcc",
+      "/usr/bin/clang",
       "-std=c2x",
       "-Wall",
       "-Wextra",
       "-pedantic",
       "-I./include",
       "-O3",
+      "-Wno-unused-command-line-argument",
       "-c",
       "-o",
       "./build/re8bit.o",
@@ -19,13 +20,14 @@
   },
   {
     "arguments": [
-      "/usr/bin/gcc",
+      "/usr/bin/clang",
       "-std=c2x",
       "-Wall",
       "-Wextra",
       "-pedantic",
       "-I./include",
       "-O3",
+      "-Wno-unused-command-line-argument",
       "-c",
       "-o",
       "./build/chip8.o",
@@ -37,13 +39,14 @@
   },
   {
     "arguments": [
-      "/usr/bin/gcc",
+      "/usr/bin/clang",
       "-std=c2x",
       "-Wall",
       "-Wextra",
       "-pedantic",
       "-I./include",
       "-O3",
+      "-Wno-unused-command-line-argument",
       "-c",
       "-o",
       "./build/window.o",
@@ -55,13 +58,14 @@
   },
   {
     "arguments": [
-      "/usr/bin/gcc",
+      "/usr/bin/clang",
       "-std=c2x",
       "-Wall",
       "-Wextra",
       "-pedantic",
       "-I./include",
       "-O3",
+      "-Wno-unused-command-line-argument",
       "-c",
       "-o",
       "./build/beep.o",
