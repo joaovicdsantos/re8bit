@@ -1,8 +1,9 @@
 #include "chip8.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-const unsigned char FONTS[] = {
+const uint8_t FONTS[] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -28,24 +29,26 @@ void _init_(Chip8 *chip8)
     chip8->SP = 0;
     chip8->delay_timer = 0;
     chip8->sound_timer = 0;
+    chip8->paused = false;
+    chip8->muted = false;
 
-    for (short i = 0; i < MEMORY_SIZE; i++)
+    for (uint16_t i = 0; i < MEMORY_SIZE; i++)
     {
         chip8->memory[i] = 0x00;
         if (i >= MEMORY_FONT_START && i < MEMORY_FONT_END) // Load fonts
             chip8->memory[i] = FONTS[i - MEMORY_FONT_START];
     }
 
-    for (short i = 0; i < DISPLAY_SIZE; i++)
+    for (uint16_t i = 0; i < DISPLAY_SIZE; i++)
         chip8->display[i] = 0x00;
 
-    for (short i = 0; i < REGISTER_SIZE; i++)
+    for (uint8_t i = 0; i < REGISTER_SIZE; i++)
         chip8->registers[i] = 0x00;
 
-    for (short i = 0; i < STACK_SIZE; i++)
+    for (uint8_t i = 0; i < STACK_SIZE; i++)
         chip8->stack[i] = 0x00;
 
-    for (short i = 0; i < KEY_SIZE; i++)
+    for (uint8_t i = 0; i < KEY_SIZE; i++)
         chip8->keys[i] = 0x00;
 }
 
@@ -85,8 +88,20 @@ void _decode(Chip8 *chip8)
     chip8->instruction.nnn = chip8->instruction.op & 0X0FFF;
 }
 
+void decrease_timers(Chip8 *chip8)
+{
+    if (chip8->delay_timer > 0)
+        chip8->delay_timer--;
+
+    if (chip8->sound_timer > 0)
+        chip8->sound_timer--;
+}
+
 void emulate_cycle(Chip8 *chip8)
 {
+    if (chip8->paused)
+        return;
+
     _fetch(chip8);
     _decode(chip8);
 
@@ -96,26 +111,26 @@ void emulate_cycle(Chip8 *chip8)
         switch (chip8->instruction.op & 0x00FF)
         {
         case 0x00E0:
-            for (short i = 0; i < DISPLAY_SIZE; i++)
+            for (uint16_t i = 0; i < DISPLAY_SIZE; i++)
                 chip8->display[i] = 0;
             break;
         case 0x00EE:
             chip8->SP -= 1;
-            chip8->PC = (short)chip8->stack[chip8->SP];
+            chip8->PC = chip8->stack[chip8->SP];
             chip8->stack[chip8->SP] = 0;
             break;
         default:
-            printf("Invalid instruction. Opcode: %04X\n", chip8->instruction.op);
+            printf("Invalid 0XXX instruction. Opcode: %04X\n", chip8->instruction.op);
             exit(1);
         }
         break;
     case 0x1000:
-        chip8->PC = (short)chip8->instruction.nnn;
+        chip8->PC = chip8->instruction.nnn;
         break;
     case 0x2000:
         chip8->stack[chip8->SP] = chip8->PC;
         chip8->SP += 1;
-        chip8->PC = (short)chip8->instruction.nnn;
+        chip8->PC = chip8->instruction.nnn;
         break;
     case 0x3000:
         if (chip8->registers[chip8->instruction.x] == chip8->instruction.nn)
@@ -151,19 +166,13 @@ void emulate_cycle(Chip8 *chip8)
             chip8->registers[chip8->instruction.x] ^= chip8->registers[chip8->instruction.y];
             break;
         case 0x0004:
-            short reg_sum = chip8->registers[chip8->instruction.x] + chip8->registers[chip8->instruction.y];
-            if (reg_sum > 255)
-                chip8->registers[0xF] = 1;
-            else
-                chip8->registers[0xF] = 0;
+            uint16_t reg_sum = chip8->registers[chip8->instruction.x] + chip8->registers[chip8->instruction.y];
+            chip8->registers[0xF] = reg_sum > 255;
             chip8->registers[chip8->instruction.x] = reg_sum & 0xFF;
             break;
         case 0x0005:
-            short reg_sub = chip8->registers[chip8->instruction.x] - chip8->registers[chip8->instruction.y];
-            if (chip8->registers[chip8->instruction.x] > chip8->registers[chip8->instruction.y])
-                chip8->registers[0xF] = 1;
-            else
-                chip8->registers[0xF] = 0;
+            uint16_t reg_sub = chip8->registers[chip8->instruction.x] - chip8->registers[chip8->instruction.y];
+            chip8->registers[0xF] = chip8->registers[chip8->instruction.x] > chip8->registers[chip8->instruction.y];
             chip8->registers[chip8->instruction.x] = reg_sub;
             break;
         case 0x0006:
@@ -171,13 +180,18 @@ void emulate_cycle(Chip8 *chip8)
             chip8->registers[0xF] = chip8->registers[chip8->instruction.x] & 1;
             chip8->registers[chip8->instruction.x] >>= 1;
             break;
+        case 0x0007:
+            uint16_t reg_sub_y = chip8->registers[chip8->instruction.y] - chip8->registers[chip8->instruction.x];
+            chip8->registers[0xF] = chip8->registers[chip8->instruction.y] > chip8->registers[chip8->instruction.x];
+            chip8->registers[chip8->instruction.x] = reg_sub_y;
+            break;
         case 0x000E:
             // chip8->registers[chip8->instruction.x] = chip8->registers[chip8->instruction.y];
             chip8->registers[0xF] = chip8->registers[chip8->instruction.x] & 0x80;
             chip8->registers[chip8->instruction.x] <<= 1;
             break;
         default:
-            printf("Invalid instruction. Opcode: %04X\n", chip8->instruction.op);
+            printf("Invalid 8XXX instruction. Opcode: %04X\n", chip8->instruction.op);
             exit(1);
             break;
         }
@@ -189,24 +203,27 @@ void emulate_cycle(Chip8 *chip8)
     case 0xA000:
         chip8->I = chip8->instruction.nnn;
         break;
+    case 0xB000:
+        chip8->PC = chip8->instruction.nnn + chip8->registers[0x0];
+        break;
     case 0xC000:
         chip8->registers[chip8->instruction.x] = (rand() % 256) & chip8->instruction.nn;
         break;
     case 0xD000:
-        unsigned char x = chip8->registers[chip8->instruction.x] % 64;
-        unsigned char y = chip8->registers[chip8->instruction.y] % 32;
-        unsigned short N = chip8->instruction.n;
-        unsigned short pixel;
-        unsigned char display_overflow = 0;
+        uint8_t x = chip8->registers[chip8->instruction.x] % 64;
+        uint8_t y = chip8->registers[chip8->instruction.y] % 32;
+        uint16_t N = chip8->instruction.n;
+        uint16_t pixel;
+        uint8_t display_overflow = 0;
 
         chip8->registers[0xF] = 0x00;
 
-        for (short y_line = 0; y_line < N; y_line++)
+        for (uint16_t y_line = 0; y_line < N; y_line++)
         {
             pixel = chip8->memory[chip8->I + y_line];
-            for (short x_line = 0; x_line < 8; x_line++)
+            for (uint16_t x_line = 0; x_line < 8; x_line++)
             {
-                short pos = (y + y_line) * 64 + x + x_line;
+                uint16_t pos = (y + y_line) * 64 + x + x_line;
                 if (pos > (DISPLAY_SIZE - 1))
                 {
                     display_overflow = 1;
@@ -236,6 +253,7 @@ void emulate_cycle(Chip8 *chip8)
                 chip8->PC += 2;
             break;
         default:
+            printf("Invalid EXXX instruction. Opcode: %04X\n", chip8->instruction.op);
             exit(1);
             break;
         }
@@ -248,7 +266,7 @@ void emulate_cycle(Chip8 *chip8)
             break;
         case 0x00A:
             chip8->PC -= 2;
-            for (short i = 0; i < KEY_SIZE; i++)
+            for (uint16_t i = 0; i < KEY_SIZE; i++)
             {
                 if (chip8->keys[i] == 1)
                 {
@@ -276,15 +294,15 @@ void emulate_cycle(Chip8 *chip8)
             chip8->memory[chip8->I + 2] = (chip8->registers[chip8->instruction.x] % 100) % 10;
             break;
         case 0x055:
-            for (short i = 0; i <= chip8->instruction.x; i++)
+            for (uint16_t i = 0; i <= chip8->instruction.x; i++)
                 chip8->memory[chip8->I + i] = chip8->registers[i];
             break;
         case 0x065:
-            for (short i = 0; i <= chip8->instruction.x; i++)
+            for (uint16_t i = 0; i <= chip8->instruction.x; i++)
                 chip8->registers[i] = chip8->memory[chip8->I + i];
             break;
         default:
-            printf("Invalid instruction. Opcode: %04X\n", chip8->instruction.op);
+            printf("Invalid FXXX instruction. Opcode: %04X\n", chip8->instruction.op);
             exit(1);
         }
         break;
@@ -292,16 +310,10 @@ void emulate_cycle(Chip8 *chip8)
         printf("Invalid instruction. Opcode: %04X\n", chip8->instruction.op);
         exit(1);
     }
-
-    if (chip8->delay_timer > 0)
-        chip8->delay_timer--;
-
-    if (chip8->sound_timer > 0)
-        chip8->sound_timer--;
 }
 
 void reset_keys(Chip8 *chip8)
 {
-    for (short i = 0; i < KEY_SIZE; i++)
+    for (uint16_t i = 0; i < KEY_SIZE; i++)
         chip8->keys[i] = 0;
 }

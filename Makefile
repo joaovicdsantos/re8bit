@@ -6,12 +6,12 @@ LIB_DIR := ./lib
 BIN_DIR := ./bin
 
 # Object Files
-OBJS := re8bit.o chip8.o window.o
+OBJS := re8bit.o chip8.o window.o beep.o
 
 # Compiler Settings
-CC := gcc
-CFLAGS := -std=c2x -Wall -Wextra -pedantic -I$(INCLUDE_DIR) -O0
-CFLAGS += -lcsfml-graphics -lcsfml-system
+CC := clang
+CFLAGS := -std=c2x -Wall -Wextra -pedantic -I$(INCLUDE_DIR) -O3
+CFLAGS += -lcsfml-graphics -lcsfml-system -lcsfml-audio -Wno-unused-command-line-argument
 
 # Build re8bit
 re8bit: dir $(OBJS)
@@ -30,6 +30,6 @@ clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 
 bear:
-	bear -- make re8bit
+	bear -- make
 
 .PHONY: all clean
